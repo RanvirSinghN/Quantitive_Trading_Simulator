@@ -75,7 +75,7 @@ These checks are still fairly basic, but they give me a foundation for building 
 
 ### Running the simulator
 
-Download the repo hpwever you like and open `main.py` and edit these values:
+Download the repo however you like and open `main.py` and edit these values:
 
 ```python
 TOTAL_STARTING_CASH = 20_000.00
