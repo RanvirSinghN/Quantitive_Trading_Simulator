@@ -1,37 +1,101 @@
 from pathlib import Path
+import sqlite3
 
 import yfinance as yf
 import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DATA_DIR = PROJECT_ROOT / "data" / "processed_csv"
+DATABASE_PATH = PROJECT_ROOT / "data" / "quant_trading.db"
 
 
 def download_data(ticker, start_date, end_date):
     """
     Downloads historical stock data for a given ticker symbol.
     """
-    data = yf.download(ticker, start=start_date, end=end_date)
+    data = yf.download(ticker, start=start_date, end=end_date, auto_adjust=False)
     return data
 
 
-def save_data_to_csv(data, filename):
+def initialise_database():
     """
-    Cleans and saves the downloaded data to the data csv folder.
+    Creates the SQLite database and prices table if they do not already exist.
     """
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS prices (
+                ticker TEXT NOT NULL,
+                date TEXT NOT NULL,
+                open REAL NOT NULL,
+                high REAL NOT NULL,
+                low REAL NOT NULL,
+                close REAL NOT NULL,
+                adj_close REAL,
+                volume INTEGER NOT NULL,
+                PRIMARY KEY (ticker, date)
+            )
+            """
+        )
+
+
+def save_data_to_database(data, ticker):
+    """
+    Cleans and saves downloaded OHLCV data to the SQLite prices table.
+    """
+    initialise_database()
     cleaned_data = clean_data(data)
-    output_path = DATA_DIR / filename
-    cleaned_data.to_csv(output_path)
-    return output_path
+
+    rows = cleaned_data.reset_index().rename(
+        columns={
+            "Date": "date",
+            "Open": "open",
+            "High": "high",
+            "Low": "low",
+            "Close": "close",
+            "Adj Close": "adj_close",
+            "Volume": "volume",
+        }
+    )
+    rows["ticker"] = ticker.upper()
+    if "adj_close" not in rows.columns:
+        rows["adj_close"] = None
+
+    rows["date"] = pd.to_datetime(rows["date"]).dt.strftime("%Y-%m-%d")
+    rows = rows[["ticker", "date", "open", "high", "low", "close", "adj_close", "volume"]]
+
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        conn.executemany(
+            """
+            INSERT OR REPLACE INTO prices (
+                ticker, date, open, high, low, close, adj_close, volume
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            rows.itertuples(index=False, name=None),
+        )
+
+    return DATABASE_PATH
 
 
-def load_data_from_csv(filename):
+def load_data_from_database(ticker=None):
     """
-    Loads data from the data csv folder.
+    Loads price data from the SQLite prices table.
     """
-    input_path = DATA_DIR / filename
-    return pd.read_csv(input_path)
+    initialise_database()
+
+    query = "SELECT * FROM prices"
+    params = []
+
+    if ticker is not None:
+        query += " WHERE ticker = ?"
+        params.append(ticker.upper())
+
+    query += " ORDER BY ticker, date"
+
+    with sqlite3.connect(DATABASE_PATH) as conn:
+        return pd.read_sql_query(query, conn, params=params, parse_dates=["date"])
 
 
 def clean_data(data):
@@ -94,8 +158,5 @@ def clean_data(data):
     cleaned = cleaned.set_index("Date")
     return cleaned
 
-appl = download_data("AAPL", "2020-01-01", "2023-01-01")
-msft = download_data("MSFT", "2020-01-01", "2023-01-01")
-
-save_data_to_csv(appl, "AAPL_data.csv")
-save_data_to_csv(msft, "MSFT_data.csv")
+if __name__ == "__main__":
+    print("test")
