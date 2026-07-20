@@ -9,3 +9,5 @@ I am building a quant-style trading assistant/simulator that uses market data, A
 3) Add real quant strats like monte carlo simulation on portfolio and trading signals
 4) Use broker APIs to simulate real time paper trading
 5) Build the "AI assistant layer". Use ML with the feature engineering and connect to api that researches and helps generates signals for me
+
+## Current Build
