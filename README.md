@@ -1,8 +1,6 @@
-# Quantitive_Trading_App
+# Quantitive_Trading_Simulator
 
-I am building a quant-style trading assistant that uses market data, APIs, machine learning, financial theory, and a Streamlit dashboard to analyse and simulate trades. The goal is to build a strong portfolio project for applications while properly understanding the backend, modelling logic, and risk management.
-
-The first stage focuses only on simulated and paper trading, not real-money execution.
+I am building a quant-style trading assistant/simulator that uses market data, APIs, machine learning, financial theory, and a Streamlit dashboard to analyse and simulate trades. The goal is to build a strong portfolio project for applications while properly understanding the backend, modelling logic, and risk management.
 
 ## Current Phase Lineup
 
