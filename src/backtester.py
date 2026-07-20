@@ -8,14 +8,6 @@ from IPython.display import display
 
 
 CURRENT_DIRECTORY = Path.cwd().resolve()
-PROJECT_ROOT = (
-    CURRENT_DIRECTORY.parent
-    if CURRENT_DIRECTORY.name == "notebooks"
-    else CURRENT_DIRECTORY
-)
-
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.data_loader import clean_data, download_data, save_data_to_database
 from src.feature_engineering import calculate_and_save_features
