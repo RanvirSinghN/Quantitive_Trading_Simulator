@@ -103,6 +103,14 @@ The output includes the amount of data created for each ticker, a per-stock perf
 └── data/                      # Local SQLite data and processed files
 ```
 
+### Testing/Results
+
+Currently I have a basic test of the simulation by giving the model 20,000 dollars to trade on APPLE, NVIDIA and MICROSOFT stocks from the 16th of March 2020 up to 21st July 2026. 
+
+The model turned the $20,000 into $83,581 giving an overall return of 317.9%. 
+
+This is just an early stage test before real time portfolio simulation and updateded risk management is implemented. 
+
 ### Current limitations
 
 This is an early-stage research simulator, so the results should not be treated as evidence that the strategy would perform the same way in live markets.
