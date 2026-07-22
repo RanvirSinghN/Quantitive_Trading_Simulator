@@ -2,6 +2,7 @@ import pandas as pd
 import math
 from collections import Counter
 from src.backtester import run_simulation, import_selected_tickers, delete_temp_database
+from src.risk_manager import inverse_volatility_distribution
 from IPython.display import display
 
 
@@ -59,13 +60,16 @@ if __name__ == "__main__":
         end_date=market_data_end_date,
     )
 
-    allocated_cash = total_starting_cash / len(tickers)
+    cash_distribution = inverse_volatility_distribution(tickers, as_of_date=SIMULATION_START_DATE)
+    print("Risk management has divided the cash as following: ")
+    print(cash_distribution)
     simulation_states = {}
     trade_journals = {}
     per_stock_rows = []
     starting_date = simulation_start.strftime("%Y-%m-%d")
 
     for ticker in tickers:
+        allocated_cash = float(cash_distribution[ticker] * total_starting_cash / 100.0)
         state, trade_log, summary = run_simulation(
             ticker=ticker,
             starting_date=starting_date,
