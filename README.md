@@ -19,7 +19,7 @@ The simulator can:
 - Turn those indicators into an explainable bullish, bearish, or neutral signal
 - Apply basic risk checks before allowing a new buy
 - Simulate trades using the next trading day’s opening price
-- Split starting cash equally across multiple stocks
+- Split starting cash using basic risk management across multiple stocks
 - Report results for each stock and for the combined portfolio
 - Keep a trade log showing what happened and why
 
@@ -43,8 +43,7 @@ Next-day trade simulation
 Portfolio results and trade history
 ```
 
-The starting cash is currently divided equally between the selected stocks. Each stock is simulated separately as either fully invested or held in cash, and the results are then combined into one portfolio summary.
-I next plan to start with an inverse wighting scheme on votality to allocate the capital across specified stocks to trade on.
+The starting cash is divided based on the inverse of the 20 day votality for each stock the day simulation starts. Each stock is simulated separately as either fully invested or held in cash, and the results are then combined into one portfolio summary.
 
 To reduce look-ahead bias, a signal created on one trading day is not executed using that same day’s price. Any trade is carried out at the opening price of the next available trading day.
 
