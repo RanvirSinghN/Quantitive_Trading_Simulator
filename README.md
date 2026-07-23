@@ -1,6 +1,6 @@
 # Quantitive_Trading_Simulator
 
-I am building a quant-style trading assistant/simulator that uses market data, APIs, machine learning, financial theory, and a Streamlit dashboard to analyse and simulate trades. The goal is to build a strong portfolio project for applications while properly understanding the backend, modelling logic, and risk management.
+I am building a quant-style trading assistant/simulator that uses market data, APIs, machine learning, financial theory, and a Streamlit dashboard to analyse and simulate trades. The goal is to build a strong portfolio project for while properly understanding the backend, modelling logic, and risk management.
 
 I want to learn how quantitative trading systems work from the ground up. The aim is not to create a magic stock picker or an automated trading bot. It is a research project where I can test ideas on historical data, understand why a signal was produced, and gradually build better portfolio and risk-management tools.
 
@@ -22,10 +22,11 @@ The simulator can:
 - Split starting cash using basic risk management across multiple stocks
 - Report results for each stock and for the combined portfolio
 - Keep a trade log showing what happened and why
+- Display charts of its trading decisions
 
 ### How the simulation works
 
-UPDATE: Now the simulation logic simply happens through the streamlit dashboard ran in app.py.
+UPDATE: Now the simulation logic simply happens through the streamlit dashboard when running app.py.
 
 I choose the starting cash, ticker symbols, and simulation start date in `main.py`. The program then runs the following pipeline:
 
@@ -80,9 +81,11 @@ Download the repo however you like and then either:
 
 1) Dashboard:
 
-Run the interactive trading dashboard locally with `streamlit run dashboard/app.py` to configure input easily and explore historical portfolio simulations. Also option to display charts showing when trades occured.
+Run the interactive trading dashboard locally with `streamlit run dashboard.py` to configure input easily and explore historical portfolio simulations. 
 
-2) Terminal ouput: 
+Also option to display charts marking when trades occured.
+
+2) Terminal ouput for quick testing: 
 
  open `main.py` and edit these values:
 
@@ -104,7 +107,8 @@ The output includes the amount of data created for each ticker, a per-stock perf
 ### Project structure
 
 ```text
-├── main.py                    # Runs the multi-stock simulation
+├── main.py                    # Runs the multi-stock simulation on terminal
+|── dashboard.py               # Sets up interactive streamlit dashboard to run simulation
 ├── src/
 │   ├── data_loader.py         # Downloads, cleans, and stores price data
 │   ├── feature_engineering.py # Calculates technical features
@@ -115,11 +119,9 @@ The output includes the amount of data created for each ticker, a per-stock perf
 
 ### Testing/Results
 
-Currently I have a basic test of the simulation by giving the model 20,000 dollars to trade on APPLE, NVIDIA and MICROSOFT stocks from the 16th of March 2020 up to 21st July 2026. 
+Basic test of the simulation by giving the model 20,000 dollars to trade on APPLE, NVIDIA and MICROSOFT stocks from the 16th of March 2020 up to 21st July 2026. 
 
 The model turned the $20,000 into $83,581 giving an overall return of 317.9%. 
-
-This is just an early stage test before real time portfolio simulation and updateded risk management is implemented. 
 
 ### Current limitations
 
@@ -128,20 +130,19 @@ This is an early-stage research simulator, so the results should not be treated 
 The current version does not yet include:
 
 - Bid/ask spreads or liquidity modelling
-- Position sizing beyond equal cash allocation
 - Benchmark comparisons
 - Detailed performance statistics such as Sharpe ratio and maximum portfolio drawdown
-- A completed dashboard or AI research layer
 - Paper trading or broker integration
+- AI research layer
 
 ### What I plan to add next
 
 My next steps are to:
 
 1) Improve the portfolio and risk logic.
-2) Build an interactive dashboard using streamlit.
-3) Explore how I can add in monte carlo simulations to predict future outcomes.
-4) After the historical simulator is more reliable, I plan to move towards paper trading with a manual approval workflow.
+2) After the historical simulator is more reliable, I plan to move towards paper trading with a manual approval workflow.
+3) Set up live paper trading portfolio with more complex risk management and freedom
+4) xplore how I can add in monte carlo simulations to predict future outcomes.
 
 ## Disclaimer
 
