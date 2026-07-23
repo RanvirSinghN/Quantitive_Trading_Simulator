@@ -5,7 +5,8 @@ import sys
 import pandas as pd
 import sqlite3
 from IPython.display import display
-
+import plotly.graph_objects as go
+from datetime import date
 
 CURRENT_DIRECTORY = Path.cwd().resolve()
 
@@ -290,6 +291,135 @@ def delete_temp_database(tickers: list[str], downloaded_market_data: dict[str, p
     assert (cleanup_status[["prices", "features", "signals"]] == 0).all().all()
     print("Temporary database rows after cleanup:")
     display(cleanup_status)
+
+def create_trade_chart(
+    price_data: pd.DataFrame,
+    trade_log: pd.DataFrame,
+    ticker: str,
+    starting_date: str | date | pd.Timestamp,
+) -> go.Figure:
+    """Return a price chart with markers at completed trade execution points.
+
+    The price line uses the downloaded daily closing price from the simulation
+    period. BUY and SELL markers use each trade's actual execution date and
+    execution price, which may differ from that day's closing price.
+    """
+    normalised_ticker = ticker.strip().upper()
+    if not normalised_ticker:
+        raise ValueError("ticker cannot be empty.")
+
+    # Reuse the project's existing Yahoo-data cleaner so the chart sees the same
+    # chronological OHLCV rows that feed the simulation pipeline.
+    cleaned_prices = clean_data(price_data)
+    start = pd.to_datetime(starting_date, errors="raise").normalize()
+    chart_prices = cleaned_prices.loc[cleaned_prices.index >= start].copy()
+    if chart_prices.empty:
+        raise ValueError(f"No {normalised_ticker} prices exist on or after {start.date()}.")
+
+    # An empty journal is valid: the function still returns the stock-price line.
+    plotted_trades = trade_log.copy()
+    if not plotted_trades.empty:
+        required_columns = {"action", "execution_date", "execution_price"}
+        missing_columns = required_columns - set(plotted_trades.columns)
+        if missing_columns:
+            raise ValueError(
+                f"Trade log is missing required columns: {sorted(missing_columns)}"
+            )
+
+        plotted_trades["action"] = plotted_trades["action"].astype(str).str.upper()
+        plotted_trades["execution_date"] = pd.to_datetime(
+            plotted_trades["execution_date"],
+            errors="raise",
+        )
+        plotted_trades["execution_price"] = pd.to_numeric(
+            plotted_trades["execution_price"],
+            errors="raise",
+        )
+
+    # Create the interactive closing-price line and show exact values on hover.
+    figure = go.Figure()
+    figure.add_trace(
+        go.Scatter(
+            x=chart_prices.index,
+            y=chart_prices["Close"],
+            mode="lines",
+            name="Closing price",
+            line={"color": "#2563eb", "width": 2},
+            hovertemplate=(
+                "Date: %{x|%Y-%m-%d}<br>Closing price: $%{y:,.2f}<extra></extra>"
+            ),
+        )
+    )
+
+    # Split completed trades by action; an empty journal produces empty markers.
+    if plotted_trades.empty:
+        buys = plotted_trades
+        sells = plotted_trades
+    else:
+        buys = plotted_trades.loc[plotted_trades["action"] == "BUY"]
+        sells = plotted_trades.loc[plotted_trades["action"] == "SELL"]
+
+    # Plot green upward triangles at actual BUY executions.
+    if not buys.empty:
+        figure.add_trace(
+            go.Scatter(
+                x=buys["execution_date"],
+                y=buys["execution_price"],
+                mode="markers",
+                name="BUY",
+                marker={
+                    "color": "#16a34a",
+                    "line": {"color": "white", "width": 1},
+                    "size": 13,
+                    "symbol": "triangle-up",
+                },
+                hovertemplate=(
+                    "BUY<br>Date: %{x|%Y-%m-%d}<br>"
+                    "Execution price: $%{y:,.2f}<extra></extra>"
+                ),
+            )
+        )
+
+    # Plot red downward triangles at actual SELL executions.
+    if not sells.empty:
+        figure.add_trace(
+            go.Scatter(
+                x=sells["execution_date"],
+                y=sells["execution_price"],
+                mode="markers",
+                name="SELL",
+                marker={
+                    "color": "#dc2626",
+                    "line": {"color": "white", "width": 1},
+                    "size": 13,
+                    "symbol": "triangle-down",
+                },
+                hovertemplate=(
+                    "SELL<br>Date: %{x|%Y-%m-%d}<br>"
+                    "Execution price: $%{y:,.2f}<extra></extra>"
+                ),
+            )
+        )
+
+    # Apply a clean financial-chart layout while preserving Plotly zoom and pan.
+    figure.update_layout(
+        title=f"{normalised_ticker} price and simulated trades",
+        xaxis_title="Date",
+        yaxis_title="Price (USD)",
+        template="plotly_white",
+        hovermode="closest",
+        height=520,
+        legend={
+            "orientation": "h",
+            "x": 0,
+            "y": 1.08,
+            "xanchor": "left",
+            "yanchor": "bottom",
+        },
+        margin={"l": 20, "r": 20, "t": 85, "b": 20},
+    )
+
+    return figure
 
 
 
