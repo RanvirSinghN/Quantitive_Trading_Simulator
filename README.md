@@ -6,7 +6,7 @@ I want to learn how quantitative trading systems work from the ground up. The ai
 
 ## Current Build
 
-The project currently supports historical backtesting across multiple stocks using market data from Yahoo Finance.
+The project currently supports historical backtesting across multiple stocks using market data from Yahoo Finance with a basic streamlit dashboard.
 
 ### What it does so far
 
@@ -24,6 +24,8 @@ The simulator can:
 - Keep a trade log showing what happened and why
 
 ### How the simulation works
+
+UPDATE: Now the simulation logic simply happens through the streamlit dashboard ran in app.py.
 
 I choose the starting cash, ticker symbols, and simulation start date in `main.py`. The program then runs the following pipeline:
 
@@ -74,7 +76,15 @@ These checks are still fairly basic, but they give me a foundation for building 
 
 ### Running the simulator
 
-Download the repo however you like and open `main.py` and edit these values:
+Download the repo however you like and then either:
+
+1) Dashboard:
+
+Run the interactive trading dashboard locally with `streamlit run dashboard/app.py` to configure input easily and explore historical portfolio simulations. Also option to display charts showing when trades occured.
+
+2) Terminal ouput: 
+
+ open `main.py` and edit these values:
 
 ```python
 TOTAL_STARTING_CASH = 20_000.00
