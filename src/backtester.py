@@ -70,13 +70,21 @@ def load_simulation_data(ticker: str, starting_date: str) -> pd.DataFrame:
             raise ValueError("Every trade must execute after its signal date.")
 
     return simulation_data
+    
+def calc_and_append_equity(equity_log: list, state: SimulationState, execution_close: float, execution_date: pd.Timestamp) -> None:
+    equity = state.cash + state.shares_held * execution_close
+    equity_log.append({
+        "date": execution_date,
+        "ticker": state.ticker,
+        "equity": equity,
+    })
 
 def run_simulation(
     ticker: str,
     starting_date: str,
     initial_cash: float,
     sell_remaining: Optional[bool] = None,
-) -> tuple[SimulationState, pd.DataFrame, dict[str, float]]:
+) -> tuple[SimulationState, pd.DataFrame, pd.DataFrame, dict[str, float]]:
     if initial_cash <= 0:
         raise ValueError("initial_cash must be greater than zero.")
     if sell_remaining is not None and not isinstance(sell_remaining, bool):
