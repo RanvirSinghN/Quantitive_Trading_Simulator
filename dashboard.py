@@ -21,6 +21,7 @@ from src.backtester import (
     create_trade_chart,
 )
 from src.risk_manager import inverse_volatility_distribution  
+from src.portfolio import create_equity_curve
 
 
 # These values match the historical-data assumptions currently used in main.py.
