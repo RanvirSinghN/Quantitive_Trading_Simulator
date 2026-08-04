@@ -21,6 +21,7 @@ The simulator can:
 - Simulate trades using the next trading day’s opening price
 - Split starting cash using basic risk management across multiple stocks
 - Report results for each stock and for the combined portfolio
+- Generate equity charts 
 - Keep a trade log showing what happened and why
 - Display charts of its trading decisions
 
@@ -43,7 +44,7 @@ Risk guardrails
         ↓
 Next-day trade simulation
         ↓
-Portfolio results and trade history
+Portfolio results, performance metrics and trade history
 ```
 
 The starting cash is divided based on the inverse of the 20 day votality for each stock the day simulation starts. Each stock is simulated separately as either fully invested or held in cash, and the results are then combined into one portfolio summary.
@@ -102,7 +103,7 @@ Then run:
 python main.py
 ```
 
-The output includes the amount of data created for each ticker, a per-stock performance summary, the overall portfolio result, and the number of simulated trades.
+The output includes the amount of data created for each ticker, a per-stock performance summary, the overall portfolio result, performance of portfolio (equity curve so far) and the number of simulated trades.
 
 ### Project structure
 
@@ -114,14 +115,15 @@ The output includes the amount of data created for each ticker, a per-stock perf
 │   ├── feature_engineering.py # Calculates technical features
 │   ├── strategy.py            # Scores features and creates signals
 │   └── backtester.py          # Simulates trades and calculates results
+│   └── portfolio.py           # Will keep track of full portfolio and calculates/plots performance metrics
 └── data/                      # Local SQLite data and processed files
 ```
 
 ### Testing/Results
 
-Basic test of the simulation by giving the model 20,000 dollars to trade on APPLE, NVIDIA and MICROSOFT stocks from the 16th of March 2020 up to 21st July 2026. 
+Initial rough test of the simulation by giving the model 20,000 dollars to trade on APPLE, NVIDIA and MICROSOFT stocks from the 16th of March 2020 up to 21st July 2026. 
 
-The model turned the $20,000 into $83,581 giving an overall return of 317.9%. 
+The model turned the $20,000 into $83,581 over this period. I have obviously chosen known surviving stocks so further more robust testing is needed when I update logic and risk eval. 
 
 ### Current limitations
 
@@ -131,7 +133,6 @@ The current version does not yet include:
 
 - Bid/ask spreads or liquidity modelling
 - Benchmark comparisons
-- Detailed performance statistics such as Sharpe ratio and maximum portfolio drawdown
 - Paper trading or broker integration
 - AI research layer
 
@@ -142,7 +143,7 @@ My next steps are to:
 1) Improve the portfolio and risk logic.
 2) After the historical simulator is more reliable, I plan to move towards paper trading with a manual approval workflow.
 3) Set up live paper trading portfolio with more complex risk management and freedom
-4) xplore how I can add in monte carlo simulations to predict future outcomes.
+4) Explore how I can add in monte carlo simulations to predict future outcomes.
 
 ## Disclaimer
 
