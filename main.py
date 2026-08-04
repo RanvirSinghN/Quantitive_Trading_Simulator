@@ -65,12 +65,13 @@ if __name__ == "__main__":
     print(cash_distribution)
     simulation_states = {}
     trade_journals = {}
+    equity_logs = {}
     per_stock_rows = []
     starting_date = simulation_start.strftime("%Y-%m-%d")
 
     for ticker in tickers:
         allocated_cash = float(cash_distribution[ticker] * total_starting_cash / 100.0)
-        state, trade_log, summary = run_simulation(
+        state, trade_log, equity_log, summary = run_simulation(
             ticker=ticker,
             starting_date=starting_date,
             initial_cash=allocated_cash,
@@ -80,7 +81,7 @@ if __name__ == "__main__":
 
         # trade_journal.py has no API yet; keep each backtester log separate here.
         trade_journals[ticker] = trade_log.assign(ticker=ticker)
-
+        equity_logs[ticker] = equity_log.assign(ticker=ticker)
         final_value = float(summary["final_value"])
         profit_loss = final_value - allocated_cash
         per_stock_rows.append(
