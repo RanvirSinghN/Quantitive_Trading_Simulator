@@ -94,20 +94,22 @@ def run_dashboard_simulation(
 
         per_stock_rows: list[dict[str, object]] = []
         trade_journals: dict[str, pd.DataFrame] = {}
+        equity_logs: dict[str, pd.DataFrame] = {}
         trade_charts: dict[str, object] = {}
 
         # Run the existing simulator separately for each risk-weighted allocation.
         for ticker in tickers:
             allocation_percentage = float(cash_distribution[ticker])
             allocated_cash = allocation_percentage * total_starting_cash / 100.0
-            state, trade_log, summary = run_simulation(
+            state, trade_log, equity_log, summary = run_simulation(
                 ticker=ticker,
                 starting_date=starting_date,
                 initial_cash=allocated_cash,
                 sell_remaining=sell_remaining_at_end,
             )
-
             trade_journals[ticker] = trade_log
+            equity_logs[ticker] = equity_log
+
             trade_charts[ticker] = create_trade_chart(
                 price_data=downloaded_market_data[ticker],
                 trade_log=trade_log,
@@ -137,6 +139,20 @@ def run_dashboard_simulation(
         overall_return_percentage = 100.0 * total_profit_loss / total_starting_cash
         total_trades = int(per_stock_summary["Trades"].sum())
 
+        # Combine all per-stock equity logs into a single portfolio-level equity curve.
+    
+        all_equity_logs = pd.concat(equity_logs.values(), ignore_index=True)
+
+        portfolio_equity_log = (
+            all_equity_logs
+            .sort_values(["ticker", "date"])
+            .drop_duplicates(["ticker", "date"], keep="last")
+            .groupby("date", as_index=False)["equity"]
+            .sum()
+        )
+
+        portfolio_equity_chart = create_equity_curve(portfolio_equity_log)
+
         if not math.isclose(
             float(per_stock_summary["Starting cash (£)"].sum()),
             total_starting_cash,
@@ -155,6 +171,7 @@ def run_dashboard_simulation(
             "total_profit_loss": total_profit_loss,
             "overall_return_percentage": overall_return_percentage,
             "total_trades": total_trades,
+            "portfolio_equity_chart": portfolio_equity_chart,
         }
     finally:
         # The existing main flow treats these database rows as temporary too.
@@ -184,6 +201,13 @@ def display_simulation_results(
         delta=f"{results['overall_return_percentage']:.2f}%",
     )
     metric_columns[3].metric("Total trades", results["total_trades"])
+
+    st.subheader("Portfolio performance")
+    st.plotly_chart(
+        results["portfolio_equity_chart"],
+        width="stretch",
+        config={"displaylogo": False},
+    )
 
     # Display risk allocation and outcome for each selected stock.
     st.subheader("Results by stock")
