@@ -100,6 +100,7 @@ def run_simulation(
         cash=float(initial_cash),
     )
     trades = []
+    equity_log = []
 
     for row in simulation_data.itertuples(index=False):
         action = (
@@ -132,6 +133,7 @@ def run_simulation(
             state.entry_price = None
 
         elif action in {"HOLD", "HOLD_CASH"}:
+            calc_and_append_equity(equity_log, state, row.execution_close, row.execution_date)
             continue
 
         else:
@@ -149,6 +151,8 @@ def run_simulation(
                 "reasons": row.reasons,
             }
         )
+
+        calc_and_append_equity(equity_log, state, row.execution_close, row.execution_date)
 
     final_close = float(simulation_data.iloc[-1]["execution_close"])
     final_value = state.cash + state.shares_held * final_close
@@ -175,6 +179,8 @@ def run_simulation(
                     "reasons": "ended with shares held, user opted to sell at final close price",
                 }
             )
+            calc_and_append_equity(equity_log, state, final_close, simulation_data.iloc[-1]["execution_date"])
+
     summary = {
         "initial_cash": float(f"{initial_cash:.2f}"),
         "final_cash": float(f"{state.cash:.2f}"),
@@ -183,7 +189,7 @@ def run_simulation(
         "total_return": float(f"{final_value / initial_cash - 1:.4f}"),
     }
 
-    return state, pd.DataFrame(trades), summary
+    return state, pd.DataFrame(trades), pd.DataFrame(equity_log), summary
 
 def delete_ticker_data_from_database(selected_tickers):
     """Deletes selected tickers in child-to-parent order for a fresh run."""
