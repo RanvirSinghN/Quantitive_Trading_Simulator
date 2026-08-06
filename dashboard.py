@@ -17,11 +17,17 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.backtester import (  
     delete_temp_database,
     import_selected_tickers,
+    run_buy_and_hold_simulation,
     run_simulation,
     create_trade_chart,
 )
 from src.risk_manager import inverse_volatility_distribution  
-from src.portfolio import create_equity_curve
+from src.portfolio import (
+    calc_time_in_market,
+    calc_trade_count,
+    calculate_performance_stats,
+    create_equity_curve,
+)
 
 
 # These values match the historical-data assumptions currently used in main.py.
@@ -96,6 +102,7 @@ def run_dashboard_simulation(
         trade_journals: dict[str, pd.DataFrame] = {}
         equity_logs: dict[str, pd.DataFrame] = {}
         trade_charts: dict[str, object] = {}
+        weighted_time_in_market = 0.0
 
         # Run the existing simulator separately for each risk-weighted allocation.
         for ticker in tickers:
@@ -109,6 +116,11 @@ def run_dashboard_simulation(
             )
             trade_journals[ticker] = trade_log
             equity_logs[ticker] = equity_log
+            weighted_time_in_market += (
+                allocation_percentage
+                / 100.0
+                * calc_time_in_market(equity_log, trade_log)
+            )
 
             trade_charts[ticker] = create_trade_chart(
                 price_data=downloaded_market_data[ticker],
@@ -126,7 +138,7 @@ def run_dashboard_simulation(
                     "Final value (£)": final_value,
                     "Profit / loss (£)": profit_loss,
                     "Return (%)": 100.0 * profit_loss / allocated_cash,
-                    "Trades": len(trade_log),
+                    "Trades": calc_trade_count(trade_log),
                     "Remaining cash (£)": float(summary["final_cash"]),
                     "Shares held": float(state.shares_held),
                 }
@@ -151,7 +163,34 @@ def run_dashboard_simulation(
             .sum()
         )
 
-        portfolio_equity_chart = create_equity_curve(portfolio_equity_log)
+        buy_and_hold_equity_log = run_buy_and_hold_simulation(
+            market_data=downloaded_market_data,
+            cash_distribution=cash_distribution,
+            total_starting_cash=total_starting_cash,
+            starting_date=portfolio_equity_log.iloc[0]["date"],
+            ending_date=portfolio_equity_log.iloc[-1]["date"],
+        )
+
+        comparison_equity_log = pd.concat(
+            [
+                portfolio_equity_log.assign(series="Trading strategy"),
+                buy_and_hold_equity_log.assign(series="Buy and hold"),
+            ],
+            ignore_index=True,
+        )
+        portfolio_equity_chart = create_equity_curve(comparison_equity_log)
+        performance_stats = calculate_performance_stats(
+            equity_log=portfolio_equity_log,
+            starting_equity=total_starting_cash,
+        )
+        performance_stats["time_in_market_pct"] = weighted_time_in_market
+        performance_stats["trade_count"] = total_trades
+        buy_and_hold_stats = calculate_performance_stats(
+            equity_log=buy_and_hold_equity_log,
+            starting_equity=total_starting_cash,
+        )
+        buy_and_hold_stats["time_in_market_pct"] = 100.0
+        buy_and_hold_stats["trade_count"] = 0
 
         if not math.isclose(
             float(per_stock_summary["Starting cash (£)"].sum()),
@@ -171,6 +210,8 @@ def run_dashboard_simulation(
             "total_profit_loss": total_profit_loss,
             "overall_return_percentage": overall_return_percentage,
             "total_trades": total_trades,
+            "performance_stats": performance_stats,
+            "buy_and_hold_stats": buy_and_hold_stats,
             "portfolio_equity_chart": portfolio_equity_chart,
         }
     finally:
@@ -180,6 +221,51 @@ def run_dashboard_simulation(
                 tickers=tickers,
                 downloaded_market_data=downloaded_market_data,
             )
+
+
+def _format_performance_metric(
+    value: float | int | None,
+    suffix: str = "",
+) -> str:
+    """Format dashboard statistics while handling undefined ratios."""
+    if value is None or not math.isfinite(float(value)):
+        return "N/A"
+    return f"{float(value):,.2f}{suffix}"
+
+
+def _build_performance_comparison(
+    strategy_stats: dict[str, float | int | None],
+    buy_and_hold_stats: dict[str, float | int | None],
+) -> pd.DataFrame:
+    """Build a display-ready strategy and benchmark metrics table."""
+    metric_rows = [
+        ("Total return", "total_return_pct", "%"),
+        ("Annualized return", "annualized_return_pct", "%"),
+        ("Maximum drawdown", "max_drawdown_pct", "%"),
+        ("Annualized volatility", "annualized_volatility_pct", "%"),
+        ("Sharpe ratio", "sharpe_ratio", ""),
+        ("Calmar ratio", "calmar_ratio", ""),
+        ("Best day", "best_day_pct", "%"),
+        ("Worst day", "worst_day_pct", "%"),
+        ("Positive days", "positive_day_rate_pct", "%"),
+        ("Time in market", "time_in_market_pct", "%"),
+    ]
+    return pd.DataFrame(
+        [
+            {
+                "Metric": label,
+                "Trading strategy": _format_performance_metric(
+                    strategy_stats[key],
+                    suffix,
+                ),
+                "Buy and hold": _format_performance_metric(
+                    buy_and_hold_stats[key],
+                    suffix,
+                ),
+            }
+            for label, key, suffix in metric_rows
+        ]
+    )
 
 
 def display_simulation_results(
@@ -202,7 +288,23 @@ def display_simulation_results(
     )
     metric_columns[3].metric("Total trades", results["total_trades"])
 
-    st.subheader("Portfolio performance")
+    st.subheader("Performance metrics")
+    performance_comparison = _build_performance_comparison(
+        strategy_stats=results["performance_stats"],
+        buy_and_hold_stats=results["buy_and_hold_stats"],
+    )
+    st.dataframe(
+        performance_comparison,
+        hide_index=True,
+        width="stretch",
+    )
+    st.caption(
+        "Independent-sleeve simulation. Sharpe assumes a 0% annual risk-free "
+        "rate. Both portfolios use the same starting allocations; strategy time "
+        "in market is allocation-weighted."
+    )
+
+    st.subheader("Equity curve")
     st.plotly_chart(
         results["portfolio_equity_chart"],
         width="stretch",
