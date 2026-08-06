@@ -148,8 +148,7 @@ My next steps are to:
 
 1) Improve the portfolio and risk logic by going from all in all out to position sizing 
 2) After the historical simulator is more reliable, I plan to move towards paper trading with a manual approval workflow.
-3) Set up live paper trading portfolio with more complex risk management and freedom
-4) Explore how I can add in monte carlo simulations to predict future outcomes.
+3) Set up live paper trading portfolio which I can then add more 'quant strategies' to.
 
 ## Disclaimer
 
