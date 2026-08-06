@@ -4,6 +4,8 @@ I am building a quant-style trading assistant/simulator that uses market data, A
 
 I want to learn how quantitative trading systems work from the ground up. The aim is not to create a magic stock picker or an automated trading bot. It is a research project where I can test ideas on historical data, understand why a signal was produced, and gradually build better portfolio and risk-management tools.
 
+![dashboard](assets/testone.png)
+
 ## Current Build
 
 The project currently supports historical backtesting across multiple stocks using market data from Yahoo Finance with a basic streamlit dashboard.
@@ -107,7 +109,7 @@ The output includes the amount of data created for each ticker, a per-stock perf
 
 ###Quick test on SNP500 over 2 years:
 
-
+![tesstone](assets/testtwo.png)
 
 ### Project structure
 
@@ -122,12 +124,6 @@ The output includes the amount of data created for each ticker, a per-stock perf
 │   └── portfolio.py           # Will keep track of full portfolio and calculates/plots performance metrics
 └── data/                      # Local SQLite data and processed files
 ```
-
-### Testing/Results
-
-Initial rough test of the simulation by giving the model 20,000 dollars to trade on APPLE, NVIDIA and MICROSOFT stocks from the 16th of March 2020 up to 21st July 2026. 
-
-The model turned the $20,000 into $83,581 over this period. I have obviously chosen known surviving stocks so further more robust testing is needed when I update logic and risk eval. 
 
 ### Current limitations
 
