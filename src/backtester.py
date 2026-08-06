@@ -8,7 +8,16 @@ from IPython.display import display
 import plotly.graph_objects as go
 from datetime import date
 
+
 CURRENT_DIRECTORY = Path.cwd().resolve()
+PROJECT_ROOT = (
+    CURRENT_DIRECTORY.parent
+    if CURRENT_DIRECTORY.name == "notebooks"
+    else CURRENT_DIRECTORY
+)
+
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.data_loader import clean_data, download_data, save_data_to_database
 from src.feature_engineering import calculate_and_save_features
@@ -70,7 +79,7 @@ def load_simulation_data(ticker: str, starting_date: str) -> pd.DataFrame:
             raise ValueError("Every trade must execute after its signal date.")
 
     return simulation_data
-    
+
 def calc_and_append_equity(equity_log: list, state: SimulationState, execution_close: float, execution_date: pd.Timestamp) -> None:
     equity = state.cash + state.shares_held * execution_close
     equity_log.append({
@@ -99,6 +108,7 @@ def run_simulation(
         starting_date=starting_date,
         cash=float(initial_cash),
     )
+
     trades = []
     equity_log = []
 
@@ -149,15 +159,14 @@ def run_simulation(
                 "signal_label": row.signal_label,
                 "signal_score": row.signal_score,
                 "reasons": row.reasons,
-            }
-        )
+            })
 
         calc_and_append_equity(equity_log, state, row.execution_close, row.execution_date)
 
     final_close = float(simulation_data.iloc[-1]["execution_close"])
     final_value = state.cash + state.shares_held * final_close
     if state.shares_held > 0:
-        print(f"Shares remaining: {state.shares_held} at final close price: {final_close:.2f} with value: {state.shares_held * final_close:.2f}")
+        print(f"Shares remaining for {state.ticker}: {state.shares_held} at final close price: {final_close:.2f} with value: {state.shares_held * final_close:.2f}")
         should_sell = sell_remaining
         if should_sell is None:
             sell = input("Would you like to sell your remaining shares at the final close price? (y/n): ")
@@ -177,10 +186,9 @@ def run_simulation(
                     "signal_label": simulation_data.iloc[-1]["signal_label"],
                     "signal_score": simulation_data.iloc[-1]["signal_score"],
                     "reasons": "ended with shares held, user opted to sell at final close price",
-                }
-            )
+                })
             calc_and_append_equity(equity_log, state, final_close, simulation_data.iloc[-1]["execution_date"])
-
+            
     summary = {
         "initial_cash": float(f"{initial_cash:.2f}"),
         "final_cash": float(f"{state.cash:.2f}"),
@@ -190,6 +198,74 @@ def run_simulation(
     }
 
     return state, pd.DataFrame(trades), pd.DataFrame(equity_log), summary
+
+
+def run_buy_and_hold_simulation(
+    market_data: dict[str, pd.DataFrame],
+    cash_distribution: pd.Series,
+    total_starting_cash: float,
+    starting_date: str | date | pd.Timestamp,
+    ending_date: str | date | pd.Timestamp | None = None,
+) -> pd.DataFrame:
+    """Buy each allocated ticker once and return the combined daily equity log."""
+    if total_starting_cash <= 0:
+        raise ValueError("total_starting_cash must be greater than zero.")
+    if not market_data:
+        raise ValueError("market_data cannot be empty.")
+
+    start = pd.to_datetime(starting_date, errors="raise").normalize()
+    end = (
+        pd.to_datetime(ending_date, errors="raise").normalize()
+        if ending_date is not None
+        else None
+    )
+    if end is not None and end < start:
+        raise ValueError("ending_date cannot be earlier than starting_date.")
+
+    sleeve_values: dict[str, pd.Series] = {}
+    allocated_cash_by_ticker: dict[str, float] = {}
+
+    for ticker, raw_prices in market_data.items():
+        if ticker not in cash_distribution.index:
+            raise ValueError(f"No cash allocation was provided for {ticker}.")
+
+        prices = clean_data(raw_prices)
+        prices = prices.loc[prices.index >= start]
+        if end is not None:
+            prices = prices.loc[prices.index <= end]
+        if prices.empty:
+            raise ValueError(f"No {ticker} prices exist in the benchmark period.")
+
+        first_open = float(prices.iloc[0]["Open"])
+        if first_open <= 0:
+            raise ValueError(f"Invalid first opening price for {ticker}: {first_open}")
+
+        allocated_cash = (
+            float(cash_distribution[ticker])
+            / 100.0
+            * total_starting_cash
+        )
+        shares_held = allocated_cash / first_open
+        sleeve_values[ticker] = prices["Close"].astype(float) * shares_held
+        allocated_cash_by_ticker[ticker] = allocated_cash
+
+    all_dates = pd.Index(
+        sorted(set().union(*(values.index for values in sleeve_values.values())))
+    )
+    aligned_sleeves = pd.DataFrame(index=all_dates)
+    for ticker, values in sleeve_values.items():
+        aligned_sleeves[ticker] = (
+            values.reindex(all_dates)
+            .ffill()
+            .fillna(allocated_cash_by_ticker[ticker])
+        )
+
+    return (
+        aligned_sleeves.sum(axis=1)
+        .rename("equity")
+        .rename_axis("date")
+        .reset_index()
+    )
 
 def delete_ticker_data_from_database(selected_tickers):
     """Deletes selected tickers in child-to-parent order for a fresh run."""
@@ -305,6 +381,7 @@ def delete_temp_database(tickers: list[str], downloaded_market_data: dict[str, p
     assert (cleanup_status[["prices", "features", "signals"]] == 0).all().all()
     print("Temporary database rows after cleanup:")
     display(cleanup_status)
+
 
 def create_trade_chart(
     price_data: pd.DataFrame,
@@ -434,6 +511,7 @@ def create_trade_chart(
     )
 
     return figure
+
 
 
 
