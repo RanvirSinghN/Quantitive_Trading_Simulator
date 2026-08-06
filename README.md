@@ -24,6 +24,7 @@ The simulator can:
 - Split starting cash using basic risk management across multiple stocks
 - Report results for each stock and for the combined portfolio
 - Generate equity charts and performance metrics like drawdown, annualised return, Sharpe ratio etc
+- Compare to buy and hold strategy
 - Keep a trade log showing what happened and why
 - Display charts of its trading decisions
 
