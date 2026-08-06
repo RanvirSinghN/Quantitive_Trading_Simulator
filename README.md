@@ -14,7 +14,7 @@ The project currently supports historical backtesting across multiple stocks usi
 
 The simulator can:
 
-- Download historical daily stock data from Yahoo Finance
+- Download historical daily stock data from Yahoo Finance, selected by user
 - Clean and validate the market data before using it
 - Store prices, features, and signals in a temporary SQLite database
 - Calculate common technical indicators for each stock
