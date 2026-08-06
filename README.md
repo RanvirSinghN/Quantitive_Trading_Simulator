@@ -112,7 +112,10 @@ The output includes the amount of data created for each ticker, a per-stock perf
 
 ### Quick test on SNP500 over 2 years:
 
-![tesstone](assets/testtwo.png)
+![tesstone](assets/snptestone.png)
+![testtwo](assets/snptesttwo.png)
+
+As seen, the strategy does not beat the buy and hold comparison but has slightly lower risk metrics
 
 ### Project structure
 
