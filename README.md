@@ -29,11 +29,13 @@ The simulator can:
 
 ### How the simulation works
 
-UPDATE: Now the simulation logic simply happens through the streamlit dashboard when running app.py.
+UPDATE: Now the simulation logic simply happens through the streamlit dashboard when running app.py. term_test.py is now just for simple terminal testing
 
-I choose the starting cash, ticker symbols, and simulation start date in `main.py`. The program then runs the following pipeline:
+The program then runs the following pipeline:
 
 ```text
+User picks input stocks and simulation parameters
+        ↓
 Yahoo Finance data
         ↓
 Data cleaning and validation
@@ -90,7 +92,7 @@ Also option to display charts marking when trades occured.
 
 2) Terminal ouput for quick testing: 
 
- open `main.py` and edit these values:
+ open `term_test.py` and edit these values:
 
 ```python
 TOTAL_STARTING_CASH = 20_000.00
@@ -114,7 +116,7 @@ The output includes the amount of data created for each ticker, a per-stock perf
 ### Project structure
 
 ```text
-├── main.py                    # Runs the multi-stock simulation on terminal
+├── term_test.py               # Runs the multi-stock simulation on terminal
 |── dashboard.py               # Sets up interactive streamlit dashboard to run simulation
 ├── src/
 │   ├── data_loader.py         # Downloads, cleans, and stores price data
@@ -140,7 +142,7 @@ The current version does not yet include:
 
 My next steps are to:
 
-1) Improve the portfolio and risk logic.
+1) Improve the portfolio and risk logic by going from all in all out to position sizing 
 2) After the historical simulator is more reliable, I plan to move towards paper trading with a manual approval workflow.
 3) Set up live paper trading portfolio with more complex risk management and freedom
 4) Explore how I can add in monte carlo simulations to predict future outcomes.
