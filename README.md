@@ -21,7 +21,7 @@ The simulator can:
 - Simulate trades using the next trading day’s opening price
 - Split starting cash using basic risk management across multiple stocks
 - Report results for each stock and for the combined portfolio
-- Generate equity charts 
+- Generate equity charts and performance metrics like drawdown, annualised return, Sharpe ratio etc
 - Keep a trade log showing what happened and why
 - Display charts of its trading decisions
 
@@ -103,7 +103,11 @@ Then run:
 python main.py
 ```
 
-The output includes the amount of data created for each ticker, a per-stock performance summary, the overall portfolio result, performance of portfolio (equity curve so far) and the number of simulated trades.
+The output includes the amount of data created for each ticker, a per-stock performance summary, the overall portfolio result, performance of portfolio and the number of simulated trades.
+
+###Quick test on SNP500 over 2 years:
+
+
 
 ### Project structure
 
