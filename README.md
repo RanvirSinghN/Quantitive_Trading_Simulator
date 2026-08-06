@@ -107,7 +107,7 @@ python main.py
 
 The output includes the amount of data created for each ticker, a per-stock performance summary, the overall portfolio result, performance of portfolio and the number of simulated trades.
 
-###Quick test on SNP500 over 2 years:
+### Quick test on SNP500 over 2 years:
 
 ![tesstone](assets/testtwo.png)
 
